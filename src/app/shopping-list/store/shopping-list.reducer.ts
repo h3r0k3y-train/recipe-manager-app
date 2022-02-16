@@ -11,6 +11,8 @@ const initialState: State = {
   ingredients: [
     new Ingredient('Apples', 5),
     new Ingredient('Tomatoes', 10),
+    new Ingredient('Buns', 2),
+    new Ingredient('Meat', 1)
   ],
   editedIngredient: null,
   editedIngredientIndex: -1
