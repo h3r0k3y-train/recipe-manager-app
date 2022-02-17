@@ -20,7 +20,7 @@ export interface AuthResponseData {
   registered?: boolean;
 }
 
-const handleAuthentication = (email: string, userId: string, token: string, expiresIn:number) => {
+const handleAuthentication = (email: string, userId: string, token: string, expiresIn: number) => {
   const expirationDate: Date = new Date(new Date().getTime() + expiresIn * 1000);
   const user: User = new User(email, userId, token, expirationDate);
   localStorage.setItem('userData', JSON.stringify(user));
@@ -28,7 +28,8 @@ const handleAuthentication = (email: string, userId: string, token: string, expi
       email: email,
       userId: userId,
       token: token,
-      expirationDate: expirationDate
+      expirationDate: expirationDate,
+      redirect: true
     });
 }
 
@@ -70,7 +71,7 @@ export class AuthEffects {
         tap(resData => {
           this.authService.setLogoutTimer(+resData.expiresIn * 1000);
         }),
-        map(resData => { // map is write first: when there is a error only catchError and following code will execute, not before code
+        map(resData => { // map is write first: when there is a error only catchError and following code will execute, not the code before
           return handleAuthentication(resData.email, resData.localId, resData.idToken, +resData.expiresIn);
         }),
         catchError(responseError => {
@@ -112,8 +113,10 @@ export class AuthEffects {
   @Effect({dispatch: false})
   authRedirect = this.actions$.pipe(
     ofType(AuthActions.AUTHENTICATE_SUCCESS),
-    tap(() => {
-      this.router.navigate(['/']);
+    tap((authSuccessAction: AuthActions.AuthenticateSuccess) => {
+      if(authSuccessAction.payload.redirect) {
+        this.router.navigate(['/']);
+      }
     })
   );
 
@@ -141,7 +144,8 @@ export class AuthEffects {
           email: loadedUser.email,
           userId: loadedUser.id,
           token: loadedUser.token,
-          expirationDate: new Date(userData._tokenExpirationDate)
+          expirationDate: new Date(userData._tokenExpirationDate),
+          redirect: false
         });
       }
       return { type: 'DUMMY' }; // new dummy action with no effect (is a object with a type property) to dispatch something and avoid errors
